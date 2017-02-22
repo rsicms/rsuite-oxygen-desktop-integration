@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plugin SYSTEM "../plugin.dtd">
+<plugin
+ name="RSuite Check In Plugin"
+ description="Check In documents to RSuite"
+ version="1.0.0"
+ vendor="Really Strategies"
+ class="com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteCheckInPlugin">
+ <runtime>
+  	<library name="lib/activation-1.1.jar"/>
+	<library name="lib/commons-beanutils-1.8.0.jar"/>
+	<library name="lib/commons-cli-1.2.jar"/>
+	<library name="lib/commons-codec-1.6.jar"/>
+	<library name="lib/commons-collections-3.2.jar"/>
+	<library name="lib/commons-httpclient-3.1.jar"/>
+	<library name="lib/commons-io-1.4.jar"/>
+	<library name="lib/commons-logging-1.1.jar"/>
+	<library name="lib/core-renderer-R7.jar"/>
+	<library name="lib/cxf-2.1.jar"/>
+	<library name="lib/geronimo-annotation_1.0_spec-1.1.jar"/>
+	<library name="lib/geronimo-ws-metadata_2.0_spec-1.1.1.jar"/>
+	<library name="lib/groovy-all-1.5.4.jar"/>
+	<library name="lib/jaxb-api-2.1.jar"/>
+	<library name="lib/jaxb-impl-2.1.6.jar"/>
+	<library name="lib/jaxws-api-2.1-1.jar"/>
+	<library name="lib/jms-1.1.jar"/>
+	<library name="lib/jmxri-1.2.1.jar"/>
+	<library name="lib/jmxtools-1.2.1.jar"/>
+	<library name="lib/jxl-2.6.12.jar"/>
+	
+	<library name="lib/log4j-1.2.15.jar"/>
+	<library name="lib/mail-1.4.jar"/>
+
+	<library name="lib/rsi-dtdparser-20090909.jar"/>
+	<library name="lib/rsi-utils-20090106.jar"/>
+	<library name="lib/rsuite-admin-client-4.0.8.jar"/>
+	<library name="lib/rsuite-api-4.0.15.jar"/>
+	<library name="lib/rsuite-client2-4.0.8.jar"/>
+	<library name="lib/rsuite-oxygen-1.1.jar"/>
+	<library name="lib/rsuite-tools-doclet-20081126.jar"/>
+	
+	<library name="lib/saaj-api-1.3.jar"/>
+	<library name="lib/saaj-impl-1.3.jar"/>
+	<library name="lib/saxon8-8.9.0.4.jar"/>
+	<library name="lib/script-api-1.0-fr-ri.jar"/>
+	<library name="lib/soap-rsidev.jar"/>
+	<library name="lib/stax-api-1.0.1.jar"/>
+	<library name="lib/velocity-1.4.jar"/>
+	<library name="lib/wsdl4j-1.6.1.jar"/>
+	<library name="lib/wstx-asl-3.2.1.jar"/>
+	<library name="lib/xercesImpl-2.11.0.jar"/>
+	<library name="lib/xml-apis-1.4.01.jar"/>
+	<library name="lib/xml-resolver-1.2.jar"/>
+	<library name="lib/XmlSchema-1.4.5.jar"/>
+ </runtime>
+ 
+  <extension type="URLHandler" 
+  class="com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteCheckInURLHandlerExtension"/>
+ 
+  <extension type="URLChooser" 
+  class="com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteCheckInChooserExtension"/>
+ 
+ <extension type="URLChooserToolbar" 
+  class="com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteCheckInChooserExtension"/>
+ 
+</plugin>

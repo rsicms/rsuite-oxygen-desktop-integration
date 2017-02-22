@@ -1,0 +1,68 @@
+<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>
+      Oxygen RSuite Client Installation Instructions
+    </title>
+  </head>
+  <body>
+    <h1>
+      Oxygen RSuite Client Installation Instructions
+    </h1>
+    <p>
+      Extract the zip file under 
+      <code>
+        {
+        <i>
+          oxygen-root
+        </i>
+        }/plugins
+      </code>
+      directory to install. This should create a directory named 
+      <code>
+        rsuite-oxygen
+      </code>
+      under the 
+      <code>
+        plugins
+      </code>
+      directory, where 
+      <i>
+        {
+        <i>
+          oxygen-root
+        </i>
+        }
+      </i>
+      is the directory where Oxygen is installed (e.g., 
+      <code>
+        C:\Program Files\Oxygen XML Editor 15
+      </code>
+      ).
+    </p>
+    <p>
+      If the Oxygen binary is not in your search path, you will need to set the RSUITE_OXYGEN_APP environment variable to the full pathname of the oxygen executable binary. 
+    </p>
+    <p>
+      For example: 
+    </p>
+    <code>
+      "C:\Program Files\Oxygen XML Editor 15\oxygen15.2.exe" 
+    </code>
+    <p>
+      When you select "Edit with Oxygen (Desktop)" menu item in the browse tree, a dialog will come up saying the certificate of the applet cannot be verified. You will need to hit "Run" so the applet can run correctly. 
+    </p>
+    <p>
+      The managed object will be automatically locked before Oxygen is opened. 
+    </p>
+    <p>
+      Within Oxygen, any save operation will save the content saved back into RSuite, but it will not be checked-in. 
+    </p>
+    <p>
+      Under Oxygen's File menu, there is an additional menu item called "RSuite - Check In". If you select this, you will be able to (permanently) check-in your changes into RSuite (this is an alternative to going to the browse tree itself an checking-in the changes you saved via the editor). 
+    </p>
+    <p>
+      If you close the document in Oxygen (or close Oxygen itself) the check-in dialog will automatically come up asking if you want to check-in or not. You can dismiss the dialog if you already checked-in your changes. 
+    </p>
+  </body>
+</html>

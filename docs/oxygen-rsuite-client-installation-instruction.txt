@@ -1,0 +1,19 @@
+Oxygen RSuite Client Installation Instructions
+
+Extract the zip file under {oxygen-root}/plugins directory to install. This should create a directory named rsuite-oxygen under the plugins directory, where {oxygen-root} is the directory where Oxygen is installed (e.g., C:\Program Files\Oxygen XML Editor 15).
+
+If the Oxygen binary is not in your search path, you will need to set the RSUITE_OXYGEN_APP environment variable to the full pathname of the oxygen executable binary.
+
+For example:
+
+"C:\Program Files\Oxygen XML Editor 15\oxygen.exe"
+
+When you select "Edit with Oxygen (Desktop)" menu item in the browse tree, a dialog will come up saying the certificate of the applet cannot be verified. You will need to hit "Run" so the applet can run correctly.
+
+The managed object will be automatically locked before Oxygen is opened.
+
+Within Oxygen, any save operation will save the content saved back into RSuite, but it will not be checked-in.
+
+Under Oxygen's File menu, there is an additional menu item called "RSuite - Check In". If you select this, you will be able to (permanently) check-in your changes into RSuite (this is an alternative to going to the browse tree itself an checking-in the changes you saved via the editor).
+
+If you close the document in Oxygen (or close Oxygen itself) the check-in dialog will automatically come up asking if you want to check-in or not. You can dismiss the dialog if you already checked-in your changes.

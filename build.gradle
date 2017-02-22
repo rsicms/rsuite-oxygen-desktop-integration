@@ -1,0 +1,187 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+apply from: 'http://ivy.reallysi.com/ivy-repo/rsuite-std-plugin-tasks.gradle'
+apply from: 'http://ivy.reallysi.com/ivy-repo/repositories-std-include.gradle'
+
+project.buildDir = 'target'
+project.group = 'rsi'
+
+ext {
+	targetHome = projectDir.absolutePath + "${project.buildDir}"
+	targetOxygen = targetHome +'/oxygen'
+	oxygenPluginName = 'oxygen-plugin'
+	oxygenPluginDescriptorName = 'plugin.xml'
+	rsuiteOxygenDependencyName = 'rsuite-oxygen'
+	rsuitePluginName = 'rsuite-oxygen-desktop-plugin'
+	etcDir = projectDir.absolutePath + '/etc'
+	keyAlias = 'projectkey'
+	keyAlg = 'RSA'
+	keySize = 1024
+	keyStore = etcDir + '/keystore'
+	keyStorePass = 'projectpass'
+	keyValidity = 365
+	kDName = 'CN=RSI, OU=ProfSvcs, O=Really Strategies, C=US'
+	keyPass = keyStorePass
+	signedJarName = 'SignedOxygenLauncher.jar'
+}
+
+sourceSets {
+	main {
+		java { srcDir 'src/main/java' }
+		resources { srcDir 'src/main/oxygen' }
+	}
+}
+
+dependencies {
+	compile ('rsi:rsuite-api:4.0.15') {
+		transitive = false
+	}
+
+	compile 'rsi:rsi-utils:20090106'
+	compile 'apache:commons-io:1.4'
+	compile 'apache:commons-logging:1.1'
+	compile 'log4j:log4j:1.2.15'
+	compile 'xerces:xercesImpl:2.11.0'
+	compile 'rsi:rsi-dtdparser:20090909'
+	compile ('rsi:rsuite-admin-client:4.0.8') {
+		transitive = false;
+	}
+	compile 'rsi:rsuite-client2:4.0.8'
+	compile 'rsi:rsuite-tools-doclet:20081126'
+	compile 'oxygen:oxygen:15.2d'
+	compile 'apache:commons-beanutils:1.8.0'
+	compile 'apache:commons-cli:1.2'
+	compile 'apache:commons-codec:1.6'
+	compile 'apache:commons-collections:3.2'
+	compile 'apache:commons-httpclient:3.1'
+	compile 'apache:cxf:2.1'
+	compile 'apache:geronimo-annotation_1.0_spec:1.1'
+	compile 'apache:geronimo-ws-metadata_2.0_spec:1.1.1'
+	compile 'apache:soap:rsidev'
+	compile 'apache:velocity:1.4'
+	compile 'codehaus:groovy-all:1.5.4'
+	compile 'com.sun.xml.messaging.saaj:saaj-impl:1.3'
+	compile 'javax.mail:mail:1.3.3_01'
+	compile 'javax.xml.bind:jaxb-api:2.1'
+	compile 'javax.xml.soap:saaj-api:1.3'
+	compile ('javax.xml.ws:jaxws-api:2.1-1') {
+		transitive = false
+	}
+	compile 'javax.script:script-api:1.0-fr-ri'
+	compile 'jxelapi:jxl:2.6.12'
+	compile 'net.java.dev.xhtmlrenderer:core-renderer:R7'
+	compile 'org.apache.ws.commons.schema:XmlSchema:1.4.5'
+	compile 'saxonica:saxon8:8.9.0.4'
+	compile 'stax:stax-api:1.0.1'
+	compile 'sun-jaxb:jaxb-impl:2.1.6'
+	compile 'woodstox:wstx-asl:3.2.1'
+	compile 'wsdl4j:wsdl4j:1.6.1'
+	compile 'xml-resolver:xml-resolver:1.2'
+}
+
+task genkey <<{
+	println keyStore
+	ant.genkey(alias : keyAlias,storepass : keyStorePass,keystore:keyStore,keypass: keyStorePass,keyalg: keyAlg,dname : kDName, validity : keyValidity,keysize : keySize, verbose:true)
+}
+
+task packageApplet (type: Jar,dependsOn: [
+	'processResources',
+	'compileJava'
+]) {
+	def folder = new File("$buildDir/libs")
+	folder.mkdirs()
+	manifest{
+		attributes	(["Permissions":"all-permissions"])
+		attributes	(["Application-Name":"Rsuite Oxygen Integration"])
+		attributes	(["Codebase":"*"])
+		attributes	(["Application-Library-Allowable-Codebase":"*"])
+		attributes	(["Built-By":System.properties['user.name']])
+		attributes 	(["Specification-Title":"Oxygen Desktop Plugin"],"common")
+		attributes 	(["Specification-Vendor":"RSI Content Solution"],"common")
+		attributes 	(["Specification-Version":"1.0"],"common")
+		attributes 	(["Implementation-Version":"2014-09-10"],"common")
+		attributes 	(["Implementation-Vendor":"RSI Content Solution"],"common")
+
+	}
+	archiveName=signedJarName
+	from{
+		sourceSets.main.output.classesDir
+	}
+	exclude 'oxygen/**'
+	exclude 'com/**'
+}
+
+
+task signJarFile(dependsOn: 'packageApplet') <<{
+	jarToSign = new File("$buildDir/libs").listFiles().findAll {it.name.contains(signedJarName)}//it returns a list
+	ant.signjar(jar: jarToSign[0].absolutePath,alias : keyAlias, storepass : keyStorePass, keystore:keyStore, keypass : keyPass, lazy: true, verbose: true)
+	copySignedJarTo =  sourceSets.main.output.resourcesDir
+	copy {
+		println "copying "+ signedJarName
+		from new File("$buildDir/libs").listFiles().findAll {it.name.contains(signedJarName)}
+		into copySignedJarTo.absolutePath +"/WebContent/oxygen"
+	}
+	jarToSign[0].delete()
+}
+
+task prepareOxygenPlugin() <<{
+	def rsuiteOxygenFolder = new File("$targetOxygen/$oxygenPluginName")
+	def rsuiteOxygenFolderLibs = new File("$rsuiteOxygenFolder.absolutePath/lib")
+
+	copy {
+		from (configurations.compile){ exclude 'oxygen-15.2d.jar' }
+		into rsuiteOxygenFolderLibs.absolutePath
+	}
+	copy {
+		from (sourceSets.main.output.resourcesDir){ include 'plugin.xml' }
+		into rsuiteOxygenFolder.absolutePath
+	}
+	task("oxygenDependency", type: Jar){
+		baseName = rsuiteOxygenDependencyName
+		from sourceSets.main.output
+		include 'com/**'
+		include 'images/**'
+		destinationDir = rsuiteOxygenFolderLibs
+	}.execute()
+
+	rsuiteOxygenFolder.delete()
+}
+task zipOxygenPlugin(type: Zip, dependsOn: 'prepareOxygenPlugin'){
+	def rsuiteOxygenZipFile = new File("$targetOxygen/$oxygenPluginName")
+	from rsuiteOxygenZipFile
+	destinationDir =  new File("$buildDir/libs")
+	baseName = "${oxygenPluginName}"
+}
+
+jar.dependsOn signJarFile,zipOxygenPlugin
+jar {
+	baseName = "${rsuitePluginName}"
+
+	from {
+		sourceSets.main.output.resourcesDir
+	}
+	exclude 'images/**'
+	exclude 'plugin.xml'
+	exclude '*com/'
+	exclude 'OxygenLauncherApplet*'
+}
+
+artifacts { archives(zipOxygenPlugin) }
+
+uploadArchives.repositories.mavenDeployer {
+	addFilter("${rsuitePluginName}") {artifact, file ->
+		artifact.name == "${rsuitePluginName}"
+	}
+	addFilter("${oxygenPluginName}") {artifact, file ->
+		artifact.name == "${oxygenPluginName}"
+	}
+}
+
+install {
+	repositories.mavenInstaller {
+		addFilter(oxygenPluginName) {artifact, file ->
+			artifact.name == oxygenPluginName
+		}
+	}
+}
