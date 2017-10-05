@@ -7,10 +7,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -23,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
+import org.apache.commons.io.IOUtils;
 
 import com.reallysi.rsuite.client.api.SchemaInfo;
 import com.reallysi.rsuite.client.api.impl.RsuiteRepositoryImpl;
@@ -39,7 +44,7 @@ public class Handler extends URLStreamHandler {
 	private static String host = null;
 	private static String sessionKey = null;
 	private static String moId = null;
-	private static String docURL = null;
+	private static RSuiteURLParameters docURL = null;
 	private static String dtd = null;
 	private static String dtdUrl = null;
 	private static String xsdSchemaDeclaration = null;
@@ -59,7 +64,7 @@ public class Handler extends URLStreamHandler {
 		return moId;
 	}
 	public static String getUrl(){
-		return docURL;
+		return docURL.toString();
 	}
 	
 	private class RSuiteConnection extends URLConnection{
@@ -74,7 +79,7 @@ public class Handler extends URLStreamHandler {
 		}
 		
 		private String parseUrl(URL url){
-			// System.out.println(" + [DEBUG] parseUrl(): url=\"" + url + "\"");
+			log.println(" + [DEBUG] parseUrl(): url=\"" + url + "\"");
 			String[] params = url.toString().split("/");
 			host			= params[1] + "//" + params[3];
 			username		= params[4];
@@ -89,30 +94,33 @@ public class Handler extends URLStreamHandler {
 		 * Handles the connection to RSuite
 		 */
 		public void connect() throws IOException {
-  		  	java.io.PrintStream out = openLogFile("errorlog_handler_connect.txt");
   		  
   		  	ClassLoader saved = Thread.currentThread().getContextClassLoader();
 			try {
 				  // Parse url (rsuite:/http://host/user/session/moId)
-				  out.println("INCOMING URL IS:  " + url);
-				  out.println("PARSING URL TO GET PARAMETERS...");
+				  log.println("INCOMING URL IS:  " + url);
+				  log.println("PARSING URL TO GET PARAMETERS...");
 				  
 				  // url initially comes through with extension to avoid dialog window
-				  docURL = parseUrl(url);
+				  docURL = RSuiteProtocolUtils.parseRSuiteProtocolURL(url);
+				  host = docURL.getHost();
+				  username = docURL.getUserName();
+				  sessionKey = docURL.getSessionKey();
+				  moId = docURL.getMoId();
 				  // set the connection so we have it later
 				  _connection = this;
 
-				  out.println("HOST:  " + host);
-				  out.println("USERNAME:  " + username);
-				  out.println("SESSION KEY:  " + sessionKey);
-				  out.println("MOID:  " + moId);
+				  log.println("HOST:  " + host);
+				  log.println("USERNAME:  " + username);
+				  log.println("SESSION KEY:  " + sessionKey);
+				  log.println("MOID:  " + moId);
 				  
 				  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 				  
 				  // CONNECT TO RSUITE IF SESSION NOT PRESENT				  
-				  out.println("CONNECTION TO RSUITE...");
+				  log.println("CONNECTION TO RSUITE...");
 				  if(sessionKey == null){
-					  out.println("SESSION DOES NOT EXIST, PROMPT FOR LOGIN");
+					  log.println("SESSION DOES NOT EXIST, PROMPT FOR LOGIN");
 					  RSuiteLoginDialog login = new RSuiteLoginDialog();
 					  login.setLocationRelativeTo(null);
 					  login.setVisible(true);
@@ -120,27 +128,23 @@ public class Handler extends URLStreamHandler {
 				  
 				  // SESSION WAS PASSED IN, INITIALIZE REPOSITORY
 				  if(repository == null){
-					  out.println("SESSION PASSED IN BY URL, INITIALIZE REPOSITORY");
+					  log.println("SESSION PASSED IN BY URL, INITIALIZE REPOSITORY");
 					  repository = new RsuiteRepositoryImpl(username, "", host);
-					  out.println("REPOSITORY INITIALIZED.");
+					  log.println("REPOSITORY INITIALIZED.");
 					  
 					  // NO NEED TO LOGIN SINCE WE HAVE SESSION KEY ALREADY
-					  out.println("SETTING THE REPOSITORY SESSION KEY...");
+					  log.println("SETTING THE REPOSITORY SESSION KEY...");
 					  repository.sessionKey = sessionKey;
-					  out.println("SESSION KEY SET.  NO NEED FOR LOGIN");
+					  log.println("SESSION KEY SET.  NO NEED FOR LOGIN");
 				  }				  
 			}
 			catch (Throwable t) {
-			    if (out != null) {
-			        t.printStackTrace(out);
+			    if (log != null) {
+			        t.printStackTrace(log);
 			    }
 			}
 			finally{
 				Thread.currentThread().setContextClassLoader(saved);
-				if (out != null) {
-				    out.flush();
-	                out.close();
-				}
 			}
 		}
 		
@@ -148,7 +152,7 @@ public class Handler extends URLStreamHandler {
 		 * Open the rsuite protocol url in Oxygen
 		 */
 		public InputStream getInputStream() throws IOException {
-  		  	java.io.PrintStream out = openLogFile("errorlog_handler_inputstream.txt");
+  		  	
   		  	
   		  	InputStream stream = null;
   		  
@@ -158,41 +162,51 @@ public class Handler extends URLStreamHandler {
 				  String newXml = null;
 				  
 				  // CONNECT TO RSUITE
-				  out.println("GETTING DOCUMENT WITH MO ID:  " + moId + "...");
+				  log.println("GETTING DOCUMENT WITH MO ID:  " + moId + "...");
 				  String document = repository.getAsString(moId);
-				  out.println("DOCUMENT FOUND.");
-				  out.print(document);
+				  /*
+				  InputStream realInputStream = new URL(host + "/rsuite/rest/v2/content/binary/id/" + moId + "?skey=" + repository.sessionKey).openConnection().getInputStream();
+				  StringWriter writer = new StringWriter();
+				  IOUtils.copy(realInputStream, writer);
+				  String document = writer.toString();
+				  */
+				  log.println("DOCUMENT FOUND.");
+				  log.print(document);
 				  
 				  // FIND ENCODING
 				  encoding = guessXMLEncoding(document);
 
 				  XMLStructureDefinitionType xmlStructureDefinitionType = getXMLStructureDefinitionType(document);
+				  newXml = document;
 				  
 				  switch (xmlStructureDefinitionType) {
 				  	case DTD:
-				  		newXml = replaceDtdDefinition(document, out);
+				  		newXml = replaceDtdDefinition(document, log);
 					break;
 					case XSD:
-						newXml = replaceXsdDefinition(document, out);	
-					break;
+						newXml = replaceXsdDefinition(document, log);	
+					break;	
 				  }
-
+				  if (newXml == null) {
+					  newXml = document;
+				  }
+				  log.println("XML CONVERTED");
+				  log.println(newXml);
 				  // RETURN DOCUMENT
-				  out.println("CREATING INPUT STREAM FROM NEW DOCUMENT...");
+				  log.println("CREATING INPUT STREAM FROM NEW DOCUMENT...");
 				  stream = new ByteArrayInputStream(newXml.getBytes(encoding));
-				  out.println("STREAM CREATED SUCCESSFULLY.");
+				  log.println("STREAM CREATED SUCCESSFULLY.");
 			}
 			catch(Throwable t){
-				if (out != null) t.printStackTrace(out);
+				t.printStackTrace(log);
+				for (Throwable t1 : t.getSuppressed()) {
+					t1.printStackTrace(log);
+				}
 			}
 			finally{
 				Thread.currentThread().setContextClassLoader(saved);
-				if (out != null) {
-				    out.flush();
-				    out.close();
-				}
 			}
-			out.println("RETURNING STREAM TO OXYGEN...");
+			log.println("RETURNING STREAM TO OXYGEN...");
 			return stream;
 		}
 
@@ -214,7 +228,7 @@ public class Handler extends URLStreamHandler {
 			      }
 
 			      // REPLACE DTD WITH PATH IN RSUITE
-			      dtdUrl = getShemaUrl(dtd, ".dtd", out);
+			      dtdUrl = getSchemaUrl(dtd, ".dtd", out);
 			      out.println("REPLACING DTD...");
 			      newXml = document.replaceFirst(dtd, dtdUrl);
 			 
@@ -233,11 +247,12 @@ public class Handler extends URLStreamHandler {
 			
 			if (xsdSchemaDeclaration != null) {
 				String xsd = getXsd(xsdSchemaDeclaration);
-				out.println("XSD IS:  " + xsd);
-				
-				String xsdUrl = getShemaUrl(xsd, ".xsd", out);
-				xsdNamespaceDeclaration = "xsi:schemaLocation=\"" + xsdUrl + "\"";
-				newXml = document.replaceFirst(xsdSchemaDeclaration, xsdNamespaceDeclaration);
+				if (xsd != null) {
+					out.println("XSD IS:  " + xsd);
+					String xsdUrl = getSchemaUrl(xsd, ".xsd", out);
+					xsdNamespaceDeclaration = "xsi:schemaLocation=\"" + xsdUrl + "\"";
+					newXml = document.replaceFirst(xsdSchemaDeclaration, xsdNamespaceDeclaration);
+				}
 			} else {
 				out.println("NO SCHEMA FOUND!");
 			    newXml = document;
@@ -247,6 +262,7 @@ public class Handler extends URLStreamHandler {
 		}
 
 		private String getXsd(String schemaDeclaration) {
+			log.println(schemaDeclaration);
 			String xsd = null;
 			if (constainsNamaspace(schemaDeclaration)) {
 				String xsdNamespace[] = extractXsd(schemaDeclaration, namespaceDeclaration).split("\\/");
@@ -260,7 +276,8 @@ public class Handler extends URLStreamHandler {
 
 		private boolean constainsNamaspace(String schemaDeclaration) {
 			String schemaDeclarationType = getSchemaDeclarationType(schemaDeclaration);
-			if (schemaDeclarationType.equals(namespaceDeclaration)) {
+			if (schemaDeclarationType == null) { return false; }
+			if (namespaceDeclaration.equals(schemaDeclarationType)) {
 				return true;
 			}
 	
@@ -278,13 +295,12 @@ public class Handler extends URLStreamHandler {
 			return schemaDeclarationType;
 		}
 
-		private String getShemaUrl(String schemaName, String schemaFileExt,  java.io.PrintStream out) throws Exception {
+		private String getSchemaUrl(String schemaName, String schemaFileExt,  java.io.PrintStream out) throws Exception {
 			String schemaUrl = null;
 			SchemaInfo[] infos = repository.getSchemaInfos();
 		      for(SchemaInfo i : infos){
 		          if(i.getFileName().equalsIgnoreCase(schemaName)){
-		        	  schemaUrl = repository.getRepositoryUri() +
-		                  "/rsuite/schemas/" + i.getSchemaId() + schemaFileExt;
+		        	  schemaUrl = repository.getRepositoryUri() + "/rsuite/schemas/" + i.getSchemaId() + schemaFileExt;
 		              out.println("SCHEMA URL IS:  " + schemaUrl);
 		              break;
 		          }
@@ -300,17 +316,16 @@ public class Handler extends URLStreamHandler {
 			} else {
 				xsdSchemaDeclaration = "xsi:noNamespaceSchemaLocation=\"" + extractXsd(document, noNamespaceDeclaration) + "\"";
 			}
-
 			return xsdSchemaDeclaration;
 		}
 
 		private String extractXsd(String document, String schemaDeclaration) {
-			String xsdReference = null;
-			int xsdStartingPoint = document.toLowerCase().indexOf(schemaDeclaration) + schemaDeclaration.length()+2;
-			int xsdEndingPoint =  document.toLowerCase().indexOf(".xsd") + ".xsd".length();
-			xsdReference = document.substring(xsdStartingPoint, xsdEndingPoint);
-
-			return xsdReference;
+			int xsdStartingPoint = document.toLowerCase().indexOf(schemaDeclaration) + schemaDeclaration.length();
+			int xsdEndingPoint =  document.toLowerCase().indexOf(".xsd");
+			if (xsdStartingPoint != -1 && xsdEndingPoint != -1) {
+				return document.substring(xsdStartingPoint + 2, xsdEndingPoint + ".xsd".length());
+			}
+			return null;
 		}
 
 		private XMLStructureDefinitionType getXMLStructureDefinitionType(String document) {
@@ -326,7 +341,7 @@ public class Handler extends URLStreamHandler {
 		}
 
 		public OutputStream getOutputStream() throws IOException {
-  		  	java.io.PrintStream out = openLogFile("errorlog_handler_outputstream.txt");
+  		  	
   		  	
   		  	// need an output stream that is responsible for saving to Rsuite
   		  	OutputStream stream = new RSuiteOutputStream();
@@ -335,18 +350,14 @@ public class Handler extends URLStreamHandler {
 			try {
 				  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 				  
-				  out.println("CREATED RSUITE OUTPUT STREAM.");				  
-				  out.println("RETURNING RSUITE OUTPUT STREAM TO OXYGEN...");
+				  log.println("CREATED RSUITE OUTPUT STREAM.");				  
+				  log.println("RETURNING RSUITE OUTPUT STREAM TO OXYGEN...");
 			}
 			catch(Throwable t){
-				if (out != null) t.printStackTrace(out);
+				if (log != null) t.printStackTrace(log);
 			}
 			finally{
 				Thread.currentThread().setContextClassLoader(saved);
-				if (out != null) {
-				    out.flush();
-	                out.close();
-				}
 			}
 			
 			return stream;
@@ -392,50 +403,56 @@ public class Handler extends URLStreamHandler {
 		}
 		
 		public void close() throws IOException{
-  		  	java.io.PrintStream out = openLogFile("errorlog_handler_rsuiteoutputstream.txt");		
 			
   		  	ClassLoader saved = Thread.currentThread().getContextClassLoader();
+  		  	OutputStream tempOutputStream = null;
+  		  	File tempFile = File.createTempFile("rsuite", ".xml");
 			try {
 				Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 				
-				out.println("BUFFER POSITION:  " + buffer.size());				
-				out.println("CREATING STRING FROM BUFFER...");
-				
+				log.println("BUFFER POSITION:  " + buffer.size());				
+				log.println("CREATING STRING FROM BUFFER...");
 				byte[] byteArray = buffer.toByteArray();
 				String updatedContent = new String(byteArray, encoding);
-				
-				out.println("RE-WRITING THE SCHEMA DECLARATION...");
+				log.println("RE-WRITING THE SCHEMA DECLARATION...");
 				updatedContent = rewriteSchemaDeclaration(updatedContent);
-				out.println("DTD PATH COMPLETE.");
+				log.println("DTD PATH COMPLETE.");
 				
-				out.println("BYTE ARRAY SIZE:  " + byteArray.length);
-				out.println("STRING CREATED.");
-				out.print(updatedContent);
+				log.println("BYTE ARRAY SIZE:  " + byteArray.length);
+				log.println("STRING CREATED.");
+				log.print(updatedContent);
 
-				out.println("PERFORMING THE UPDATE TO RSUITE...");	
-				repository.update(moId, updatedContent);	
-				out.println("UPDATE COMPLETE.");
+				log.println("PERFORMING THE UPDATE TO RSUITE...");
+				
+				tempOutputStream = new FileOutputStream(tempFile);
+				IOUtils.copy(new ByteArrayInputStream(updatedContent.getBytes(encoding)), tempOutputStream);
+				tempOutputStream.flush();
+				tempOutputStream.close();
+				repository.updateXmlFromFile(moId, tempFile);
+				
+				log.println("UPDATE COMPLETE.");
 
 				// Need to refresh document here
 				// We set the request header Location value to the url
 				// This causes Oxygen to reload the url after the save
-				out.println("SETTING REQUEST HEADER OXYGEN-ACTION...");
-				_connection.setRequestProperty("Location", docURL);
-				out.println("LOCATION HEADER VARIABLE SET TO:" + docURL);
-			} 
+				log.println("SETTING REQUEST HEADER OXYGEN-ACTION...");
+				_connection.setRequestProperty("Location", docURL.toString());
+				log.println("LOCATION HEADER VARIABLE SET TO:" + docURL);
+			}
 			catch (Throwable t) {
-				if (out != null) t.printStackTrace(out);
+				t.printStackTrace(log);
 				Frame frame = new Frame();
 				JOptionPane.showMessageDialog(frame,
 				        "An Error has occurred: "+t.getLocalizedMessage(),
 				        "RSuite Error", JOptionPane.ERROR_MESSAGE);
 			}
 			finally{
-				Thread.currentThread().setContextClassLoader(saved);
-				if (out != null) {
-				    out.flush();
-	                out.close();
+				if (tempOutputStream != null) {
+					tempOutputStream.flush();
+					tempOutputStream.close();
+					tempFile.delete();
 				}
+				Thread.currentThread().setContextClassLoader(saved);
 			}
 		}
 
@@ -443,7 +460,9 @@ public class Handler extends URLStreamHandler {
 			if (updatedContent.toLowerCase().indexOf("doctype") != -1) {
 				updatedContent = updatedContent.replaceAll("(?i)" + dtdUrl, dtd);
 			} else {
-				updatedContent = updatedContent.replaceAll(xsdNamespaceDeclaration, xsdSchemaDeclaration); 
+				if (xsdNamespaceDeclaration != null && xsdSchemaDeclaration != null) {
+					updatedContent = updatedContent.replaceAll(xsdNamespaceDeclaration, xsdSchemaDeclaration);
+				}	
 			}
 			return updatedContent;
 		}
@@ -455,30 +474,25 @@ public class Handler extends URLStreamHandler {
 	 * @return encoding
 	 */
 	protected static String guessXMLEncoding(String document){
-		java.io.PrintStream out = openLogFile("errorlog_handler_encoding.txt")	;	
 		String encoding = "UTF-8";
 		
 		ClassLoader saved = Thread.currentThread().getContextClassLoader();
 		try {
-			out.println("GUESSING ENCODING...");
+			log.println("GUESSING ENCODING...");
 			String parts[] = document.split("\"");
 			for(int i = 0; i < parts.length; i++){
 				if(parts[i].equalsIgnoreCase(" encoding=")){
 					encoding = parts[i + 1];
-					out.println("ENCODING FOUND TO BE:  " + encoding);
+					log.println("ENCODING FOUND TO BE:  " + encoding);
 					break;
 				}
 			}
 		}
 		catch(Throwable t){
-			if (out != null) t.printStackTrace(out);
+			if (log != null) t.printStackTrace(log);
 		}
 		finally{
 			Thread.currentThread().setContextClassLoader(saved);
-			if (out != null) {
-			    out.flush();
-			    out.close();
-			}
 		}
 		return encoding;
 	}
@@ -565,37 +579,32 @@ public class Handler extends URLStreamHandler {
 					String pass = new String(passwordField.getPassword());
 					password = pass;
 			
-					java.io.PrintStream out = openLogFile("errorlog_handler_logindialog.txt");
 					ClassLoader saved = Thread.currentThread().getContextClassLoader();
 					try {
 						Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 						
-						out.println("USER:  " + username);
-						out.println("PASS:  " + password);
+						log.println("USER:  " + username);
+						log.println("PASS:  " + password);
 						  
-						out.println("INITIALIZING REPOSITORY...");
+						log.println("INITIALIZING REPOSITORY...");
 						repository = new RsuiteRepositoryImpl(username, password, host);
-						out.println("REPOSITORY INITIALIZED.");
+						log.println("REPOSITORY INITIALIZED.");
 						  
-						out.println("ATTEMPTING TO LOGIN...");
+						log.println("ATTEMPTING TO LOGIN...");
 						repository.login();
-						out.println("LOGIN SUCCESSFULL.");
+						log.println("LOGIN SUCCESSFULL.");
 						  
-						out.println("SESSION KEY IS:  " +  repository.getSessionKey());
+						log.println("SESSION KEY IS:  " +  repository.getSessionKey());
 						sessionKey = repository.getSessionKey();
 						
 						Frame frame = new Frame();
 						JOptionPane.showMessageDialog(frame, "RSuite Check In Complete", "Success", JOptionPane.INFORMATION_MESSAGE);
 					} 
 					catch(Throwable t){
-						if (out != null) t.printStackTrace(out);
+						if (log != null) t.printStackTrace(log);
 					}
 					finally{
 						Thread.currentThread().setContextClassLoader(saved);
-						if (out != null) {
-						    out.flush();
-						    out.close();
-						}
 					}
 					  
 					setVisible(false);
@@ -612,9 +621,8 @@ public class Handler extends URLStreamHandler {
 		}
 	}
 	
-	private static PrintStream openLogFile(
-	        String name
-	) {
+	private static PrintStream openLogFile(String name) {
 	    return OxyUtils.openLogFile(name);
 	}
+	private static PrintStream log = openLogFile("errorlog_handler.txt");
 }

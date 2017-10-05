@@ -2,6 +2,13 @@ package com.reallysi.rsuite.oxygen.plugin.checkin;
 
 public class RSuiteURLParameters {
 
+	private String protocol;
+	public String getProtocol() {
+		return protocol;
+	}
+	public void setProtocol(String protocol) {
+		this.protocol = protocol;
+	}
 	private String host;
 	private String userName;
 	private String sessionKey;
@@ -32,4 +39,8 @@ public class RSuiteURLParameters {
 		this.moId = moId;
 	}
 
+	public String toString() {
+		return "rsuite:/" + protocol + "//" + host + "/" + userName + "/" + sessionKey + "/" + moId; 
+	}
+	
 }

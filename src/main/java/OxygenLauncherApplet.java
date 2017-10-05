@@ -23,10 +23,6 @@ import java.io.File;
 public class OxygenLauncherApplet extends java.applet.Applet {
 	
 	public static final long serialVersionUID = 1;
-	private String host;
-	private String user;
-	private String sessionKey;
-	private String moId;
 	
 	public void init(String host, String user, String sessionKey, String moId) {
 		String oxygenPath = findO2(System.getProperty("oxygen"), System.getenv("RSUITE_OXYGEN_APP"));

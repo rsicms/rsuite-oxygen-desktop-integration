@@ -1,2 +1,8 @@
-/build/
-/bin/
+.gradle
+.classpath
+.project
+.settings
+test.sh
+build
+target
+bin

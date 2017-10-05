@@ -15,6 +15,9 @@ public class RSuiteCheckInURLHandlerExtension implements URLStreamHandlerWithLoc
 	private static LockHandler lock = null;
 	
 	public static LockHandler getLock(){
+		if(lock == null){
+			lock = new com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteLockHandler();
+		}
 		return lock;
 	}
 	
@@ -35,10 +38,7 @@ public class RSuiteCheckInURLHandlerExtension implements URLStreamHandlerWithLoc
 	 */
 	@Override
 	public LockHandler getLockHandler(){
-		if(lock == null){
-			lock = new com.reallysi.rsuite.oxygen.plugin.checkin.RSuiteLockHandler();
-		}
-		return lock;
+		return getLock();
 	}
 	
 	/**

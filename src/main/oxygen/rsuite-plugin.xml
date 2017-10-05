@@ -1,29 +1,24 @@
+<?xml version="1.0"?>
 <rsuite-plugin id="@pluginId@" version="@pluginVersion@ at @timeStamp@">
-
-<extensionProvider id="rsuite.ContextMenu">
-  <!-- enables a right click to launch Oxygen -->
-  <contextMenuRuleSet name="oxygen.contextmenu.ruleset.editoxygen">
-    <menuItemList>
-      <menuItem>
-        <type>action</type>
-        <actionName>oxygen:editOxygen</actionName>
-        <label>Edit with Oxygen (Desktop)</label>
-      </menuItem>
-    </menuItemList>
-    <!--  configure rules for only xml objects? -->
-    <ruleList>
-      <rule>include nodeType mo</rule>
-    </ruleList>
-  </contextMenuRuleSet>
-</extensionProvider>
-
-  <extensionProvider id="rsuite.UI">     
-     <scriptInclude src="/oxygen/scripts/oxygen.js"/>
+  <extensionProvider id="rsuite.ContextMenu">
+    <contextMenuRuleSet name="oxygen.contextmenu.ruleset.editoxygen">
+      <menuItemList>
+        <menuItem>
+          <type>action</type>
+          <actionName>oxygen:editOxygen</actionName>
+          <label>Edit with Oxygen (Desktop)</label>
+        </menuItem>
+      </menuItemList>
+      <ruleList>
+        <rule>include nodeType mo</rule>
+      </ruleList>
+    </contextMenuRuleSet>
   </extensionProvider>
-
-<extensionProvider id="rsuite.WebService">
-  <!-- for the static root starting at "/oxygen", serve the files in /WebContent of the plugin -->
-  <staticWebService path="/WebContent/oxygen" root="/oxygen"/>
-</extensionProvider>
-
+  <extensionProvider id="rsuite.UI">
+    <scriptInclude src="/@pluginId@/scripts/oxygen.js"/>
+  </extensionProvider>
+  <extensionProvider id="rsuite.WebService">
+    <staticWebService path="/WebContent/oxygen" root="/@pluginId@"/>
+    <remoteApiDefinition handler="orbis.jnlp.OxygenJnlpGenerator" id="@pluginId@"/>
+  </extensionProvider>
 </rsuite-plugin>

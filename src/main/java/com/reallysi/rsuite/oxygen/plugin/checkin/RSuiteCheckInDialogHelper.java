@@ -15,10 +15,9 @@ public class RSuiteCheckInDialogHelper {
 	}
 	
 	public static RSuiteCheckInDialog getRSuiteCheckInDialog (String url, PrintStream out) throws Exception {
-		if (rsuiteCheckInDialogs.containsKey(url)) {
+		if (rsuiteCheckInDialogs.containsKey(url) && rsuiteCheckInDialogs.get(url) != null) {
 			return rsuiteCheckInDialogs.get(url);
 		}
-
 		return createNewRSuiteCheckInDialog(url, out, false);
 	}
 

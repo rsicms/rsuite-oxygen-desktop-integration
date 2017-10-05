@@ -38,7 +38,6 @@ public class RSuiteCheckInChooserExtension
                     if (rsuiteCheckInDialog.isFileCheckedIn()) {
                     	OxyUtils.closeCurrentOxygenEditorWithoutSaving(standalonePluginWorkspace);
                     }
-
                     RSuiteCheckInDialogHelper.remove(url);
 				}
             } else {

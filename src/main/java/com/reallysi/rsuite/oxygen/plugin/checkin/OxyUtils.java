@@ -39,9 +39,7 @@ public class OxyUtils {
 	 * @param  name     Basename of file.
 	 * @return PrintStream for log/debugging messages.
 	 */
-	public static PrintStream openLogFile(
-	        String name
-	) {
+	public static PrintStream openLogFile(String name) {
 	    if (!isDebug) return nullPS;
 	    try {
 	        if (tmpdir == null) {
@@ -49,6 +47,7 @@ public class OxyUtils {
 	                if (tmpdir == null) {
 	                    tmpdir = File.createTempFile("rsioxy", null);
 	                    tmpdir.delete();
+	                    tmpdir = new File(tmpdir.getParentFile(), "rsioxy");
 	                    if (!tmpdir.mkdir()) {
 	                        return nullPS;
 	                    }
