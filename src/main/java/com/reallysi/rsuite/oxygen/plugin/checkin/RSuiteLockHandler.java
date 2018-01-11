@@ -28,7 +28,8 @@ public class RSuiteLockHandler implements LockHandler {
   			RSuiteCheckInDialog checkin = RSuiteCheckInDialogHelper.getRSuiteCheckInDialog(rsuiteURLParameters.toString(), log);
   			if (checkin != null) {
 	  			checkin.setLocationRelativeTo(null);
-	            checkin.setVisible(true);
+	                        checkin.setVisible(true);
+				RSuiteCheckInDialogHelper.remove(rsuiteURLParameters.toString());
   			}
 		}
 		catch(Throwable t){
