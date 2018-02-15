@@ -32,11 +32,10 @@ sourceSets {
 		resources { srcDir 'src/main/oxygen' }
 	}
 }
-def rsuiteVersion = '5.3.1-qa3';
+def rsuiteVersion = '5.3.3-qa37';
 processResources.ext.resourceFilterTokens.rsuiteVersion = rsuiteVersion;
 
 dependencies {
-	
 	compile ("rsi:rsuite-api:${rsuiteVersion}") {
 		transitive = false
 	}

@@ -17,6 +17,8 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -42,6 +44,7 @@ public class Handler extends URLStreamHandler {
 	private static String username = null;
 	private static String password = null;
 	private static String host = null;
+	private static String protocol = null;
 	private static String sessionKey = null;
 	private static String moId = null;
 	private static RSuiteURLParameters docURL = null;
@@ -104,6 +107,7 @@ public class Handler extends URLStreamHandler {
 				  // url initially comes through with extension to avoid dialog window
 				  docURL = RSuiteProtocolUtils.parseRSuiteProtocolURL(url);
 				  host = docURL.getHost();
+				  protocol = docURL.getProtocol().concat("//");
 				  username = docURL.getUserName();
 				  sessionKey = docURL.getSessionKey();
 				  moId = docURL.getMoId();
@@ -160,10 +164,11 @@ public class Handler extends URLStreamHandler {
 			try {
 				  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 				  String newXml = null;
-				  
+				  Map<String, Object> options = new HashMap<String, Object>();
+				  options.put("includeSchema", "true");
 				  // CONNECT TO RSUITE
 				  log.println("GETTING DOCUMENT WITH MO ID:  " + moId + "...");
-				  String document = repository.getAsString(moId);
+				  String document = repository.getAsString(moId, options);
 				  /*
 				  InputStream realInputStream = new URL(host + "/rsuite/rest/v2/content/binary/id/" + moId + "?skey=" + repository.sessionKey).openConnection().getInputStream();
 				  StringWriter writer = new StringWriter();
@@ -228,7 +233,7 @@ public class Handler extends URLStreamHandler {
 			      }
 
 			      // REPLACE DTD WITH PATH IN RSUITE
-			      dtdUrl = getSchemaUrl(dtd, ".dtd", out);
+			      dtdUrl = protocol.concat(getSchemaUrl(dtd, ".dtd", out));
 			      out.println("REPLACING DTD...");
 			      newXml = document.replaceFirst(dtd, dtdUrl);
 			 
@@ -249,7 +254,7 @@ public class Handler extends URLStreamHandler {
 				String xsd = getXsd(xsdSchemaDeclaration);
 				if (xsd != null) {
 					out.println("XSD IS:  " + xsd);
-					String xsdUrl = getSchemaUrl(xsd, ".xsd", out);
+					String xsdUrl = protocol.concat(getSchemaUrl(xsd, ".xsd", out));
 					xsdNamespaceDeclaration = "xsi:schemaLocation=\"" + xsdUrl + "\"";
 					newXml = document.replaceFirst(xsdSchemaDeclaration, xsdNamespaceDeclaration);
 				}
