@@ -32,7 +32,7 @@ sourceSets {
 		resources { srcDir 'src/main/oxygen' }
 	}
 }
-def rsuiteVersion = '5.3.3-qa37';
+def rsuiteVersion = '5.3.3.1';
 processResources.ext.resourceFilterTokens.rsuiteVersion = rsuiteVersion;
 
 dependencies {
@@ -57,6 +57,7 @@ dependencies {
 	compile 'apache:commons-codec:1.6'
 	compile 'apache:commons-collections:3.2'
 	compile 'apache:commons-httpclient:3.1'
+	compile 'commons-lang:commons-lang:2.6'
 	compile 'apache:cxf:2.1'
 	compile 'apache:geronimo-annotation_1.0_spec:1.1'
 	compile 'apache:geronimo-ws-metadata_2.0_spec:1.1.1'
